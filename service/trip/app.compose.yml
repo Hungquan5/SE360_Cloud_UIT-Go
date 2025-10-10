@@ -1,0 +1,55 @@
+version: "3.9"
+
+name: trip-app
+services:
+  trip-svc:
+    # use ONE of these:
+    # image: yourorg/trip-svc:latest
+    build: ./services/trip             # comment this out if you use image
+    env_file: .env
+    environment:
+      # app
+      APP_PORT: "8080"
+
+      # database (from trip.infra.compose.yml)
+      DB_HOST: trip-db
+      DB_PORT: "5432"
+      DB_USER: trip_svc
+      DB_PASS: trip_svc_pass
+      DB_NAME: tripdb
+
+      # optional cache (enable only if you added Redis to trip infra)
+      REDIS_ADDR: redis:6379
+
+      # internal deps (use private IP/DNS of other EC2s running those services)
+      USER_SVC_URL: http://<user-ec2-private-ip-or-dns>:8081
+      DRIVER_SVC_URL: http://<driver-ec2-private-ip-or-dns>:8082
+
+      # tracing (if you kept Jaeger in trip infra)
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+
+      # misc hardening (tweak as you like)
+      HTTP_READ_TIMEOUT_MS: "5000"
+      HTTP_WRITE_TIMEOUT_MS: "5000"
+      REQUEST_ID_HEADER: "x-request-id"
+
+    ports:
+      - "8083:8080"                    # expose TripService externally on this EC2
+    depends_on:
+      trip-db:
+        condition: service_healthy
+      # uncomment if Redis present
+      # redis:
+      #   condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+    networks: [tripnet]
+
+networks:
+  # Use the SAME network created by your trip.infra.compose.yml
+  tripnet:
+    external: true

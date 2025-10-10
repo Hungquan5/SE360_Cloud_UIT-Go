@@ -1,0 +1,55 @@
+version: "3.9"
+
+name: trip-infra
+services:
+  # --- TripService database ---
+  trip-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: trip_svc
+      POSTGRES_PASSWORD: trip_svc_pass
+      POSTGRES_DB: tripdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - trip_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trip_svc -d tripdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [tripnet]
+    restart: unless-stopped
+
+  # --- Redis (for trip cache, queues, or driver snapshoting) ---
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [tripnet]
+    restart: unless-stopped
+
+  # --- Optional: Jaeger tracing ---
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    networks: [tripnet]
+    restart: unless-stopped
+
+networks:
+  tripnet: {}
+
+volumes:
+  trip_db_data: {}
+  redis_data: {}

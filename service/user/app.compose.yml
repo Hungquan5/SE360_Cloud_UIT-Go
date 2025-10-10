@@ -1,0 +1,22 @@
+# app.compose.yml  (no 'version' key)
+services:
+  user-svc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: user-svc:latest
+    container_name: user-svc
+    environment:
+      ENV: dev
+      ADDR: ":8080"
+      DATABASE_URL: "postgres://app:password@pg:5432/appdb_user?sslmode=disable"
+      JWT_SECRET: "super_long_random_secret_change_me"
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    external: true

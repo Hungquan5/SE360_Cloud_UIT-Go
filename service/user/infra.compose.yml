@@ -1,0 +1,43 @@
+# infra.compose.yml
+version: "3.9"
+
+networks:
+  appnet:
+    name: appnet
+
+volumes:
+  pgdata:
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pg
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: appdb_user         # initial DB; you can add more later
+    ports:
+      - "5432:5432"                    # expose for local tools if needed
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Optional: run init scripts to create more DBs/schemas/users on first boot
+      # - ./db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d appdb_user"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [appnet]
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    restart: always
+    ports:
+      - "8080:8080"                    # open http://localhost:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [appnet]

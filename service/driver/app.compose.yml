@@ -1,11 +1,10 @@
-name: driver-app
 services:
-  driver-svc:
+  svc:
     build: .
     env_file: .env
     environment:
       APP_PORT: "8080"
-      REDIS_ADDR: redis:6379
+      REDIS_ADDR: redis://redis:6379
     ports:
       - "8082:8080"
     healthcheck:

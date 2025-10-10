@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -69,23 +68,35 @@ func Nearby(redis *cache.Redis) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		lat, err := strconv.ParseFloat(q.Get("lat"), 64)
-		if err != nil { http.Error(w, "lat required", 400); return }
+		if err != nil {
+			http.Error(w, "lat required", 400)
+			return
+		}
 		lon, err := strconv.ParseFloat(q.Get("lon"), 64)
-		if err != nil { http.Error(w, "lon required", 400); return }
+		if err != nil {
+			http.Error(w, "lon required", 400)
+			return
+		}
 
 		radius := 1500.0
 		if s := q.Get("radius_m"); s != "" {
 			if radius, err = strconv.ParseFloat(s, 64); err != nil || radius <= 0 {
-				http.Error(w, "invalid radius_m", 400); return
+				http.Error(w, "invalid radius_m", 400)
+				return
 			}
 		}
 		limit := 50
 		if s := q.Get("limit"); s != "" {
-			if i, e := strconv.Atoi(s); e == nil && i > 0 { limit = i }
+			if i, e := strconv.Atoi(s); e == nil && i > 0 {
+				limit = i
+			}
 		}
 
 		res, err := redis.Nearby(r.Context(), lat, lon, radius, limit)
-		if err != nil { http.Error(w, err.Error(), 500); return }
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
 		w.Header().Set("content-type", "application/json")
 		_ = json.NewEncoder(w).Encode(res)
 	}

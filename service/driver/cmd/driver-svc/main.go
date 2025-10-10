@@ -22,7 +22,9 @@ func main() {
 		log.Fatalf("redis connect failed: %v", err)
 	}
 
-	srv := httpserver.New(redisStore, cfg)
+	// ...
+	srv := httpserver.New(redisStore)
+	// ...
 	httpSrv := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           srv,

@@ -46,18 +46,19 @@ func (s *Redis) UpdateLocation(ctx context.Context, driverID string, lat, lon fl
 		Latitude:  lat,
 	}).Err()
 }
-
 func (s *Redis) Nearby(ctx context.Context, lat, lon, radiusMeters float64, limit int) ([]domain.Nearby, error) {
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
-	q := &redis.GeoSearchQuery{
-		Longitude: lon,
-		Latitude:  lat,
-		Radius:    radiusMeters,
-		Unit:      "m",
-		Sort:      "ASC",
-		Count:     limit,
+
+	q := &redis.GeoSearchLocationQuery{
+		GeoSearchQuery: redis.GeoSearchQuery{
+			Longitude: lon,
+			Latitude:  lat,
+			Radius:    radiusMeters,
+			Sort:      "ASC",
+			Count:     limit,
+		},
 		WithCoord: true,
 		WithDist:  true,
 	}
@@ -65,6 +66,7 @@ func (s *Redis) Nearby(ctx context.Context, lat, lon, radiusMeters float64, limi
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]domain.Nearby, 0, len(locs))
 	for _, l := range locs {
 		out = append(out, domain.Nearby{DriverID: l.Name, Lat: l.Latitude, Lon: l.Longitude, Meters: l.Dist})
@@ -77,9 +79,13 @@ func (s *Redis) Ready(ctx context.Context) error {
 }
 
 func ParseLimit(v string, def int) int {
-	if v == "" { return def }
+	if v == "" {
+		return def
+	}
 	n, err := strconvAtoi(v)
-	if err != nil || n <= 0 { return def }
+	if err != nil || n <= 0 {
+		return def
+	}
 	return n
 }
 

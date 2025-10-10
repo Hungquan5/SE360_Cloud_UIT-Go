@@ -22,8 +22,8 @@ services:
       REDIS_ADDR: redis:6379
 
       # internal deps (use private IP/DNS of other EC2s running those services)
-      USER_SVC_URL: http://<user-ec2-private-ip-or-dns>:8081
-      DRIVER_SVC_URL: http://<driver-ec2-private-ip-or-dns>:8082
+      USER_SVC_URL: http://localhost:8081
+      DRIVER_SVC_URL: http://localhost:8082
 
       # tracing (if you kept Jaeger in trip infra)
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317

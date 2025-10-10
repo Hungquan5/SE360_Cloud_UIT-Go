@@ -1,24 +1,20 @@
-version: "3.9"
-
 name: driver-app
 services:
   driver-svc:
-    # image: yourorg/driver-svc:latest
     build: .
-    env_file: .env                   # optional
+    env_file: .env
     environment:
       APP_PORT: "8080"
       REDIS_ADDR: redis:6379
-    ports: ["8082:8080"]
-    depends_on:
-      redis:
-        condition: service_healthy
+    ports:
+      - "8082:8080"
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/health"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/health || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 30
-    networks: [drivernet]
+    networks:
+      - drivernet
     restart: unless-stopped
 
 networks:

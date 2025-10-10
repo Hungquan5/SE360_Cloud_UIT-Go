@@ -1,1 +1,6 @@
 service/user/.env
+infra/.terraform/
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/*.pem
+infra/.terraform*

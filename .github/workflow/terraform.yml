@@ -1,0 +1,92 @@
+name: Terraform CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:   # enables a manual "Apply" button
+
+env:
+  TF_WORKING_DIR: infra
+  TF_IN_AUTOMATION: true
+  # optional: set your default region once here
+  AWS_REGION: ap-southeast-1
+
+jobs:
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+    permissions:
+      contents: read
+      id-token: write    # if you later switch to OIDC
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      # optional but handy to speed up 'init'
+      - name: Cache .terraform
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_WORKING_DIR }}/.terraform
+          key: ${{ runner.os }}-tf-${{ hashFiles('**/.terraform.lock.hcl') }}
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan (prod)
+        run: terraform plan -input=false -var-file=prod.tfvars -out=tfplan
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: ${{ env.TF_WORKING_DIR }}/tfplan
+
+  apply:
+    name: Terraform Apply (manual)
+    runs-on: ubuntu-latest
+    needs: plan
+    if: github.event_name == 'workflow_dispatch'   # only when you click "Run workflow"
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Init (ensure plugins)
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        run: terraform apply -input=false tfplan

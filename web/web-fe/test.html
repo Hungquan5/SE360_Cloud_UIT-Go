@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Test JavaScript Error Handling</title>
+</head>
+<body>
+
+  <h2>🔍 JavaScript thử bắt lỗi (try...catch)</h2>
+  <p id="demo">Kết quả sẽ hiển thị ở đây...</p>
+
+  <script>
+    console.log("✅ JavaScript đang chạy...");
+
+    try {
+      // Cố tình gọi hàm sai tên để tạo lỗi
+      adddlert("Xin chào!");
+    } 
+    catch (err) {
+      console.log("⚠️ Đã xảy ra lỗi:", err.message); // In lỗi ra console
+      document.getElementById("demo").innerText = "Lỗi: " + err.message; // Hiển thị lỗi trên trang
+    }
+
+    console.log("✅ Code vẫn tiếp tục chạy sau catch!");
+  </script>
+
+</body>
+</html>

@@ -28,18 +28,18 @@ func (s *Server) Router() http.Handler {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	// public
-	r.Route("/", func(pub chi.Router) {
-		pub.Post("/users", h.Register(s.DB))
-		pub.Post("/sessions", h.Login(s.DB, s.JWTSecret))
-	})
+	r.Route("/", func(root chi.Router) {
+		// public routes (no auth)
+		root.Post("/users", h.Register(s.DB))
+		root.Post("/sessions", h.Login(s.DB, s.JWTSecret))
 
-	// protected
-	r.Route("/", func(pr chi.Router) {
-		pr.Use(mw.Auth(s.JWTSecret)) // sets ctx userID, role
-		pr.Get("/users/me", h.Me(s.DB))
-		pr.Post("/drivers/apply", h.DriverApply(s.DB))
-		pr.Get("/drivers/me", h.DriverMe(s.DB))
+		// protected routes (with auth)
+		root.Group(func(pr chi.Router) {
+			pr.Use(mw.Auth(s.JWTSecret))
+			pr.Get("/users/me", h.Me(s.DB))
+			pr.Post("/drivers/apply", h.DriverApply(s.DB))
+			pr.Get("/drivers/me", h.DriverMe(s.DB))
+		})
 	})
 
 	return r

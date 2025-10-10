@@ -1,0 +1,22 @@
+version: "3.9"
+
+name: driver-infra
+services:
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]            # expose only if you need to inspect
+    volumes: ["redis_data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [drivernet]
+    restart: unless-stopped
+
+networks:
+  drivernet: {}
+
+volumes:
+  redis_data: {}

@@ -23,6 +23,4 @@ services:
     restart: unless-stopped
     networks:
       - drivernet
-networks:
-  drivernet:
-    external: true
+

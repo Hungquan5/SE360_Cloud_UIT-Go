@@ -1,0 +1,87 @@
+{
+  "info": {
+    "name": "Driver Service API",
+    "_postman_id": "bdf13c7a-34f2-42a4-9f8a-aaaa0000bbbb",
+    "description": "Endpoints for driver-svc (Chi + Redis). Includes health, ready, location, status, and nearby search.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health (GET /health)",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+      },
+      "response": []
+    },
+    {
+      "name": "Readiness (GET /ready)",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{base_url}}/ready", "host": ["{{base_url}}"], "path": ["ready"] }
+      },
+      "response": []
+    },
+    {
+      "name": "Set Status (POST /drivers/:id/status/:state)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/drivers/{{driver_id}}/status/{{state}}",
+          "host": ["{{base_url}}"],
+          "path": ["drivers", "{{driver_id}}", "status", "{{state}}"]
+        },
+        "description": "state must be either 'online' or 'offline'. Example: /drivers/123/status/online"
+      },
+      "response": []
+    },
+    {
+      "name": "Update Location (POST /drivers/:id/location)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"lat\": 10.762622,\n  \"lon\": 106.660172,\n  \"status\": \"ONLINE\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/drivers/{{driver_id}}/location",
+          "host": ["{{base_url}}"],
+          "path": ["drivers", "{{driver_id}}", "location"]
+        },
+        "description": "Updates driver's lat/lon (and optional status). Returns JSON with timestamp."
+      },
+      "response": []
+    },
+    {
+      "name": "Nearby Drivers (GET /drivers/nearby)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/drivers/nearby?lat={{lat}}&lon={{lon}}&radius_m={{radius_m}}&limit={{limit}}",
+          "host": ["{{base_url}}"],
+          "path": ["drivers", "nearby"],
+          "query": [
+            { "key": "lat", "value": "{{lat}}" },
+            { "key": "lon", "value": "{{lon}}" },
+            { "key": "radius_m", "value": "{{radius_m}}" },
+            { "key": "limit", "value": "{{limit}}" }
+          ]
+        },
+        "description": "Returns nearby drivers within a radius (default 1500m, limit 50)."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8081" },
+    { "key": "driver_id", "value": "123" },
+    { "key": "state", "value": "online" },
+    { "key": "lat", "value": "10.762622" },
+    { "key": "lon", "value": "106.660172" },
+    { "key": "radius_m", "value": "1500" },
+    { "key": "limit", "value": "20" }
+  ]
+}
+

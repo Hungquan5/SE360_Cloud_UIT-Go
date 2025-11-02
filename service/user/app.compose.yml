@@ -1,4 +1,8 @@
 # app.compose.yml  (no 'version' key)
+networks:
+  appnet:
+    name: appnet
+
 services:
   user-svc:
     build:
@@ -16,7 +20,3 @@ services:
     restart: unless-stopped
     networks:
       - appnet
-
-networks:
-  appnet:
-    external: true

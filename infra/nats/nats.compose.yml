@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  nats:
+    image: nats:2.10
+    container_name: nats
+    restart: unless-stopped
+
+    # Enable JetStream (-js) and custom config file
+    command: ["-js", "-c", "/etc/nats/nats.conf"]
+
+    ports:
+      - "4222:4222"   # NATS client connections
+      - "6222:6222"   # Cluster route (for future multi-node use)
+      - "8222:8222"   # Monitoring / metrics HTTP endpoint
+
+    volumes:
+      - ./nats.conf:/etc/nats/nats.conf:ro
+      - nats-data:/var/lib/nats/jetstream
+
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/varz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  nats-data:

@@ -1,16 +1,20 @@
 version: "3.9"
-
+networks:
+  drivernet:  # must match the one used by services
+    name: tripnet
 name: trip-app
 services:
   trip-svc:
     # use ONE of these:
     # image: yourorg/trip-svc:latest
-    build: ./services/trip             # comment this out if you use image
+    build:
+      context: .          # the folder that contains go.mod, cmd/, Dockerfile
+      dockerfile: Dockerfile # comment this out if you use image
     env_file: .env
     environment:
       # app
       APP_PORT: "8080"
-
+      NATS_URL: nats://nats:4222
       # database (from trip.infra.compose.yml)
       DB_HOST: trip-db
       DB_PORT: "5432"
@@ -38,9 +42,11 @@ services:
     depends_on:
       trip-db:
         condition: service_healthy
+      nats:                        # 👈 add this
+        condition: service_healthy
       # uncomment if Redis present
-      # redis:
-      #   condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
       interval: 5s
@@ -49,7 +55,3 @@ services:
     restart: unless-stopped
     networks: [tripnet]
 
-networks:
-  # Use the SAME network created by your trip.infra.compose.yml
-  tripnet:
-    external: true

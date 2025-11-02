@@ -32,12 +32,13 @@ func NewRedis(addr string) (*Redis, error) {
 }
 
 func (s *Redis) SetDriverStatus(ctx context.Context, driverID string, st domain.DriverStatus) error {
-	key := fmt.Sprintf(hashKeyDriverFmt, driverID)
-	return s.R.HSet(ctx, key, map[string]any{
-		"status":     st,
-		"updated_at": time.Now().UTC().Format(time.RFC3339Nano),
-	}).Err()
+    key := fmt.Sprintf(hashKeyDriverFmt, driverID)
+    return s.R.HSet(ctx, key, map[string]any{
+        "status":     string(st), // ✅ cast to string
+        "updated_at": time.Now().UTC().Format(time.RFC3339Nano),
+    }).Err()
 }
+
 
 func (s *Redis) UpdateLocation(ctx context.Context, driverID string, lat, lon float64) error {
 	return s.R.GeoAdd(ctx, geoKeyDrivers, &redis.GeoLocation{

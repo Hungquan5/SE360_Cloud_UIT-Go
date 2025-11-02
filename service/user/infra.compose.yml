@@ -17,13 +17,12 @@ services:
     environment:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: appdb_user         # initial DB; you can add more later
+      POSTGRES_DB: appdb_user
     ports:
-      - "5432:5432"                    # expose for local tools if needed
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Optional: run init scripts to create more DBs/schemas/users on first boot
-      # - ./db-init:/docker-entrypoint-initdb.d:ro
+      - ./db-init:/docker-entrypoint-initdb.d:ro   # ⬅️ run SQL on first init
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d appdb_user"]
       interval: 10s
@@ -31,13 +30,30 @@ services:
       retries: 10
     networks: [appnet]
 
+  # Optional: web SQL console at http://localhost:8080
   adminer:
     image: adminer:latest
     container_name: adminer
     restart: always
     ports:
-      - "8080:8080"                    # open http://localhost:8080
+      - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
     networks: [appnet]
+
+  # # Optional one-off migrations runner (manual trigger)
+  # migrate:
+  #   image: migrate/migrate:4
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   networks: [appnet]
+  #   # Mount your versioned migrations if you later move from init-sql to real migrations
+  #   volumes:
+  #     - ./migrations:/migrations
+  #   entrypoint:
+  #     [
+  #       "sh", "-c",
+  #       "migrate -path /migrations -database 'postgres://app:password@db:5432/appdb_user?sslmode=disable' up"
+  #     ]

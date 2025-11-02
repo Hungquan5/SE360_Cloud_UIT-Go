@@ -13,6 +13,7 @@ services:
       - "5434:5432"
     volumes:
       - trip_db_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro   # ⬅️ run SQL on first init
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U trip_svc -d tripdb"]
       interval: 5s
@@ -26,7 +27,7 @@ services:
     image: redis:7
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "6378:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -46,7 +47,20 @@ services:
       - "4318:4318"
     networks: [tripnet]
     restart: unless-stopped
-
+  nats:
+    image: nats:2.10-alpine
+    command: ["-js", "-m", "8222"]   # JetStream on, monitoring on 8222
+    ports:
+      - "4222:4222"                  # client
+      - "6222:6222"                  # cluster
+      - "8222:8222"                  # http monitoring
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8222/varz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks: [tripnet]
 networks:
   tripnet: {}
 

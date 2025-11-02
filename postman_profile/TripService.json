@@ -1,0 +1,191 @@
+{
+  "info": {
+    "name": "Trip Service API",
+    "_postman_id": "f3fd7b0e-3b31-4a58-9d11-aaaa0000bbbb",
+    "description": "UIT-Go Trip service (Chi + JWT). Protected routes use Bearer {{access_token}}. Run Create Trip to capture {{trip_id}} for subsequent requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{access_token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health (GET /healthz) — public",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{base_url}}/healthz", "host": ["{{base_url}}"], "path": ["healthz"] }
+      },
+      "response": []
+    },
+    {
+      "name": "Trips",
+      "item": [
+        {
+          "name": "Create Trip (POST /trips)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Has id & fare_estimate_cents', function () {",
+                  "  pm.expect(json).to.have.property('id');",
+                  "  pm.expect(json).to.have.property('fare_estimate_cents');",
+                  "});",
+                  "pm.environment.set('trip_id', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originLat\": {{originLat}},\n  \"originLng\": {{originLng}},\n  \"destLat\": {{destLat}},\n  \"destLng\": {{destLng}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trips",
+              "host": ["{{base_url}}"],
+              "path": ["trips"]
+            },
+            "description": "Creates a trip with status SEARCHING and returns {id, status, fare_estimate_cents}."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip (GET /trips/:id)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Trip (POST /trips/:id/cancel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204 No Content', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", "cancel"]
+            },
+            "description": "Sets status to CANCELLED if in SEARCHING/ACCEPTED/ONGOING."
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Trip (POST /trips/:id/complete)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204 No Content', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/complete",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", "complete"]
+            },
+            "description": "Sets status to COMPLETED if currently ACCEPTED/ONGOING."
+          },
+          "response": []
+        },
+        {
+          "name": "Rate Trip (POST /trips/:id/rate)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"score\": {{score}},\n  \"comment\": \"{{comment}}\",\n  \"rateeId\": \"{{ratee_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/rate",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", "rate"]
+            },
+            "description": "Requires trip status COMPLETED, else 409. Inserts into ratings(trip_id, rater_id, ratee_id, score, comment)."
+          },
+          "response": []
+        },
+        {
+          "name": "Trip WS (GET /trips/:id/ws) — note",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/ws",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", "ws"]
+            },
+            "description": "WebSocket endpoint. Postman collections don't execute WS; use a WS client (Hoppscotch/Insomnia/web app) with Authorization header if enforced upstream."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8083" },
+    { "key": "access_token", "value": "" },
+    { "key": "trip_id", "value": "" },
+    { "key": "originLat", "value": "10.762622" },
+    { "key": "originLng", "value": "106.660172" },
+    { "key": "destLat", "value": "10.780000" },
+    { "key": "destLng", "value": "106.700000" },
+    { "key": "score", "value": "5" },
+    { "key": "comment", "value": "Great ride" },
+    { "key": "ratee_id", "value": "driver-123" }
+  ]
+}
+

@@ -14,7 +14,7 @@ services:
       - "6222:6222"   # Cluster route (for future multi-node use)
       - "8222:8222"   # Monitoring / metrics HTTP endpoint
 
-    volumes:
+    volumes:  
       - ./nats.conf:/etc/nats/nats.conf:ro
       - nats-data:/var/lib/nats/jetstream
 
